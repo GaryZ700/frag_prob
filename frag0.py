@@ -89,9 +89,25 @@ def getx(struct_num,atoms,struct_size,log,atom_num):
 
 def totalMass(atoms,masses):
     tmass = 0.0
-    for g in range(0,len(atoms)):
+    print(atoms)
+    print(str(len(atoms))+"   gfsd")
+    for g in atoms:
+	print(masses[atoms[g]])
         tmass = tmass + masses[atoms[g]]    
     return tmass            
+
+
+
+def fragMass(atoms,masses,frag):
+    tmass = 0.0
+    print(atoms)
+    print(str(len(atoms))+"   gfsd")
+    for g in frag:
+	print(masses[atoms[g]])
+        tmass = tmass + masses[atoms[g]]    
+    return tmass            
+
+
 
 def createGraph(longX,atoms,cutoff):
     G = nx.Graph()
@@ -178,8 +194,21 @@ for siml in range(start,last):
     os.chdir('..')
     #output.close()
 
+#vcom [frag] is center of mass velocity for specific frag
+Vcom = []					
+#for frag0 in H:
+#	Vcom.append([])
 
+for frag in H:
+    tmass = fragMass(atoms,masses,frag)
+    vtemp = np.array([0.0,0.0,0.0])
+    for atom in frag:
+        print atom                                   #Struct[MD-1]-3, where 3 is an arbitray nuumber fro # of structs above last struct
+        vtemp =  (masses[atoms[atom]] * np.array(getv(96,atoms,struct_size,(md-1),atom))/tmass)
+    Vcom.append(vtemp)
 
+for prnt in range(0,len(H)):
+    print(H[prnt] + Vcom[prnt])
 
 freqfrag = Counter(fragments)
 print freqfrag

@@ -7,6 +7,19 @@ import networkx as nx
 import numpy as np
 import os
 from collections import Counter
+import argparse as ap
+
+parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
+parser.add_argument('-f',"--filehead", metavar='filehead',type=str, default="b4500m")
+parser.add_argument('-s',"--start", metavar='start',type=int, default=1)
+parser.add_argument('-l',"--last", metavar="last",type=int,default=10)
+
+args = parser.parse_args()
+
+filehead = args.filehead
+start = args.start
+last = args.last
+
 #to get number of md files use ls -l mdlog* | wc -l
 #IMPORTANT FUNCTIONS#######################################################
 
@@ -103,10 +116,10 @@ masses = {'c':21894.2, 'h':1837.29, 'o':21894.2}
 cutoff = 3.0
 
 fragments = []
-for siml in range(1,120):
+for siml in range(start,last):
     #output = open('output','w')
     #location of folder containing mdlogs
-    loc = './b7000m' + str(siml)
+    loc = filehead + str(siml)
     #move into mdlog directory
     os.chdir(loc)
     if os.path.isfile("GEO_OPT_FAILED"):
@@ -148,7 +161,7 @@ for siml in range(1,120):
             G = createGraph(X,atoms,cutoff)
 #           H is the list of subgraphs
             H = [list(yy) for yy in nx.connected_components(G)]
-#    print H
+    print loc, H
 #   ha1/2 are for converting it into atoms (so that degenerate ones are
 #   taken into the same class. (In case that was not clear: atom number 3 and 4
 #       are both Hydrogens. So, if the atoms are not distinguishable, except their

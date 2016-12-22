@@ -9,16 +9,21 @@ import os
 from collections import Counter
 import argparse as ap
 
+
 parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
+
 parser.add_argument('-f',"--filehead", metavar='filehead',type=str, default="b4500m")
 parser.add_argument('-s',"--start", metavar='start',type=int, default=1)
 parser.add_argument('-l',"--last", metavar="last",type=int,default=10)
+
 
 args = parser.parse_args()
 
 filehead = args.filehead
 start = args.start
 last = args.last
+
+
 
 #to get number of md files use ls -l mdlog* | wc -l
 #IMPORTANT FUNCTIONS#######################################################
@@ -89,10 +94,8 @@ def getx(struct_num,atoms,struct_size,log,atom_num):
 
 def totalMass(atoms,masses):
     tmass = 0.0
-    print(atoms)
-    print(str(len(atoms))+"   gfsd")
     for g in atoms:
-	print(masses[atoms[g]])
+    
         tmass = tmass + masses[atoms[g]]    
     return tmass            
 
@@ -100,10 +103,8 @@ def totalMass(atoms,masses):
 
 def fragMass(atoms,masses,frag):
     tmass = 0.0
-    print(atoms)
-    print(str(len(atoms))+"   gfsd")
     for g in frag:
-	print(masses[atoms[g]])
+	
         tmass = tmass + masses[atoms[g]]    
     return tmass            
 
@@ -152,10 +153,10 @@ for siml in range(start,last):
     
     #get number of structs in each md file
     struct = []
-    for c in range(0,md):
+    for c in range(1,md+1):
         struct.append([])
-        struct[c] = os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read()
-    	
+        struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
+    
     #atom velocity holder
     V = []
     for h in range(0,len(atoms)):
@@ -177,7 +178,7 @@ for siml in range(start,last):
             G = createGraph(X,atoms,cutoff)
 #           H is the list of subgraphs
             H = [list(yy) for yy in nx.connected_components(G)]
-    print loc, H
+    #print loc, H
 #   ha1/2 are for converting it into atoms (so that degenerate ones are
 #   taken into the same class. (In case that was not clear: atom number 3 and 4
 #       are both Hydrogens. So, if the atoms are not distinguishable, except their
@@ -199,19 +200,38 @@ Vcom = []
 #for frag0 in H:
 #	Vcom.append([])
 
+
+#move into last folder
+os.chdir("./"+str(filehead)+str(last))
+
+#get number of md files in last folder
+md = int(os.popen('ls -l mdlog* | wc -l').read())
+
+#get number of structs in each md file
+struct = []
+for c in range(1,md+1):
+    struct.append([])
+    struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
+
 for frag in H:
+    
     tmass = fragMass(atoms,masses,frag)
+
     vtemp = np.array([0.0,0.0,0.0])
     for atom in frag:
-        print atom                                   #Struct[MD-1]-3, where 3 is an arbitray nuumber fro # of structs above last struct
-        vtemp =  (masses[atoms[atom]] * np.array(getv(96,atoms,struct_size,(md-1),atom))/tmass)
+                                       #Struct[MD-1]-3, where 3 is an arbitray nuumber fro # of structs above last struct
+        vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
     Vcom.append(vtemp)
 
 for prnt in range(0,len(H)):
-    print(H[prnt] + Vcom[prnt])
+    print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
 
 freqfrag = Counter(fragments)
-print freqfrag
+#print freqfrag
+
+
+
+
 
 #print fragments
 

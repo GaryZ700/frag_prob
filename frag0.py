@@ -10,6 +10,7 @@ from collections import Counter
 import argparse as ap
 
 
+#starting arguments
 parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
 
 parser.add_argument('-f',"--filehead", metavar='filehead',type=str, default="b4500m")
@@ -25,11 +26,11 @@ last = args.last
 
 
 
-#to get number of md files use ls -l mdlog* | wc -l
 #IMPORTANT FUNCTIONS#######################################################
 
 
 #function to get all atoms in molecule
+#returns list of atom symbols ex. 'c', 'h', 'li'
 def getatoms(atoms):
 
     #open first mdlog
@@ -94,18 +95,17 @@ def getx(struct_num,atoms,struct_size,log,atom_num):
 
 def totalMass(atoms,masses):
     tmass = 0.0
-    for g in atoms:
+    for atom in atoms:
     
-        tmass = tmass + masses[atoms[g]]    
+        tmass = tmass + masses[atoms[atom]]    
     return tmass            
 
 
 
 def fragMass(atoms,masses,frag):
     tmass = 0.0
-    for g in frag:
-	
-        tmass = tmass + masses[atoms[g]]    
+    for atom in frag:
+        tmass = tmass + masses[atoms[atom]]    
     return tmass            
 
 
@@ -120,53 +120,56 @@ def createGraph(longX,atoms,cutoff):
                 G.add_edge(i,j)
     return G 
 
-#END OF IMORTANT FUNCTIONS####################################################
+#get number of structs in mdlog file
+def getStructs(md):
+    struct = []
+    
+    for c in range(1,md+1):
+        struct.append([])
+        struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
+    
+    return struct
+  
+
+
+#END OF IMORTANT FUNCTIONS#####################################################
 
 
 #INIT IMPORTANT THINGS#######################################
 
-
-#create output file
 
 #data required
 masses = {'c':21894.2, 'h':1837.29, 'o':21894.2}
 cutoff = 3.0
 
 fragments = []
+
+os.chdir(filehead + str(start))
+
+atoms = getatoms([])
+struct_size = 3*len(atoms)+3
+
+os.chdir("..")
+
+struct = []
+
+#START DOING STUFF HERE#############################################################
+
 for siml in range(start,last):
+    
     #output = open('output','w')
-    #location of folder containing mdlogs
-    loc = filehead + str(siml)
-    #move into mdlog directory
-    os.chdir(loc)
+    
+    os.chdir(filehead + str(siml))
     if os.path.isfile("GEO_OPT_FAILED"):
         os.chdir("..")
         continue
+    
+    
     #get # of mdlogs
     md = int(os.popen('ls -l mdlog* | wc -l').read())
-    
-    #get list of atoms
-    atoms = getatoms([])
-    
-    #get amount of lines in single struct
-    struct_size = 3*len(atoms)+3
-    
-    #get number of structs in each md file
-    struct = []
-    for c in range(1,md+1):
-        struct.append([])
-        struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
-    
-    #atom velocity holder
-    V = []
-    for h in range(0,len(atoms)):
-        V.append([])
-    #V=np.array(V)
-    
-    #coordinates
-    # X
-    #Vcom = np.array([0,0,0])
-    #tmass = totalMass(atoms,masses)
+    #get number of structs in each md find
+    struct = getStructs(md)
+
     
 # This is where the main loop of reading the coordinates begin:
     for m in range(md,md+1):
@@ -195,23 +198,24 @@ for siml in range(start,last):
     os.chdir('..')
     #output.close()
 
+
+freqfrag = Counter(fragments)
+print freqfrag
+
+
 #vcom [frag] is center of mass velocity for specific frag
 Vcom = []					
-#for frag0 in H:
-#	Vcom.append([])
 
-
-#move into last folder
+#move into last molecule folder
 os.chdir("./"+str(filehead)+str(last))
 
-#get number of md files in last folder
+#get number of smd files in last folder
 md = int(os.popen('ls -l mdlog* | wc -l').read())
 
 #get number of structs in each md file
-struct = []
-for c in range(1,md+1):
-    struct.append([])
-    struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
+struct = getStructs(md) 
+
+print(str(struct)+"  struct")
 
 for frag in H:
     
@@ -219,22 +223,36 @@ for frag in H:
 
     vtemp = np.array([0.0,0.0,0.0])
     for atom in frag:
-                                       #Struct[MD-1]-3, where 3 is an arbitray nuumber fro # of structs above last struct
+                            
         vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
     Vcom.append(vtemp)
 
 for prnt in range(0,len(H)):
     print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
 
-freqfrag = Counter(fragments)
-#print freqfrag
 
+print("\n")
+#get COM KE for frags
 
+KEcom = []
+c = 0
+v = 0.0
 
+for frag in H:
+    tmass = fragMass(atoms,masses,frag)
 
+    for a in range(0,3):
+        v = v + (Vcom[c][a]*Vcom[c][a])
+    #Not sure if the equation is correct
+    tmass = fragMass(atoms,masses,frag)
 
-#print fragments
+    KEcom.append([])
+    KEcom[c] = .5*tmass*v
 
+    c = c + 1
+
+for prnt in range(0,len(H)):
+    print("Frag:" + str(H[prnt]) + "  Center of Mass KE " + str(KEcom[prnt]))
 
 
 

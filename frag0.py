@@ -236,14 +236,16 @@ print("\n")
 
 KEcom = []
 c = 0
-v = 0.0
 
 for frag in H:
     tmass = fragMass(atoms,masses,frag)
-
+    
+    v = 0.0
     for a in range(0,3):
         v = v + (Vcom[c][a]*Vcom[c][a])
     #Not sure if the equation is correct
+    # I just put the v=0.0 INSIDE the loop of frag.
+    # This is why you were getting some error.
     tmass = fragMass(atoms,masses,frag)
 
     KEcom.append([])

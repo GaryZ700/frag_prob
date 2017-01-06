@@ -195,75 +195,75 @@ for siml in range(start,last):
         ha1.append(ha2)
     fragments = fragments + [str([list(Hh) for Hh in ha1])]
     #output.write(str(len(H)))
+    #vcom [frag] is center of mass velocity for specific frag
+    Vcom = []					
+    
+    #move into last molecule folder
+#    os.chdir("./"+str(filehead)+str(last))
+    
+    #get number of smd files in last folder
+    #md = int(os.popen('ls -l mdlog* | wc -l').read())
+    
+    #get number of structs in each md file
+    #struct = getStructs(md) 
+    
+    
+    for frag in H:
+        
+        tmass = fragMass(atoms,masses,frag)
+    
+        vtemp = np.array([0.0,0.0,0.0])
+        
+        for atom in frag:
+                                
+            vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
+        
+        Vcom.append(vtemp)
+    
+    for prnt in range(0,len(H)):
+        print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
+    
+    
+    print("\n")
+    #get COM KE for frags
+    
+    KEcom = []
+    c = 0
+    
+    for frag in H:
+        tmass = fragMass(atoms,masses,frag)
+        
+        v = 0.0
+        for a in range(0,3):
+            v = v + (Vcom[c][a]*Vcom[c][a])
+        #Not sure if the equation is correct
+        # I just put the v=0.0 INSIDE the loop of frag.
+        # This is why you were getting some error.
+    
+        KEcom.append([])
+        KEcom[c] = .5*tmass*v
+    
+        c = c + 1
+    
+    for prnt in range(0,len(H)):
+        print("Frag:" + str(H[prnt]) + "  Center of Mass KE " + str(KEcom[prnt]))
+    
+    print "\n"
+    
+    KEsum = 0.0
+    for s in range(0,len(KEcom)):
+        KEsum = KEsum + KEcom[s]
+    
+    print("Sum of frag KE: " + str(KEsum))    
+        #output.close()
     os.chdir('..')
-    #output.close()
-
+    print("**************************************\n")
 
 freqfrag = Counter(fragments)
 print freqfrag
 print "\n"
 
 
-#vcom [frag] is center of mass velocity for specific frag
-Vcom = []					
-
-#move into last molecule folder
-os.chdir("./"+str(filehead)+str(last))
-
-#get number of smd files in last folder
-md = int(os.popen('ls -l mdlog* | wc -l').read())
-
-#get number of structs in each md file
-struct = getStructs(md) 
-
-
-for frag in H:
-    
-    tmass = fragMass(atoms,masses,frag)
-
-    vtemp = np.array([0.0,0.0,0.0])
-    
-    for atom in frag:
-                            
-        vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
-    
-    Vcom.append(vtemp)
-
-for prnt in range(0,len(H)):
-    print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
-
-
-print("\n")
-#get COM KE for frags
-
-KEcom = []
-c = 0
-
-for frag in H:
-    tmass = fragMass(atoms,masses,frag)
-    
-    v = 0.0
-    for a in range(0,3):
-        v = v + (Vcom[c][a]*Vcom[c][a])
-    #Not sure if the equation is correct
-    # I just put the v=0.0 INSIDE the loop of frag.
-    # This is why you were getting some error.
-
-    KEcom.append([])
-    KEcom[c] = .5*tmass*v
-
-    c = c + 1
-
-for prnt in range(0,len(H)):
-    print("Frag:" + str(H[prnt]) + "  Center of Mass KE " + str(KEcom[prnt]))
-
-print "\n"
-
-KEsum = 0.0
-for s in range(0,len(KEcom)):
-    KEsum = KEsum + KEcom[s]
-
-print("Sum of frag KE: " + str(KEsum))    
 
 
 

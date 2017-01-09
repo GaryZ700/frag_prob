@@ -8,7 +8,7 @@ import numpy as np
 import os
 from collections import Counter
 import argparse as ap
-
+import math
 
 #starting arguments
 parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
@@ -132,6 +132,28 @@ def getStructs(md):
   
 
 
+def translate(atoms,frag):
+    
+    holder = ""
+
+    for atom in frag:
+        holder = holder + " " + atoms[atom]
+   
+    return holder
+
+
+#return standard deviation of data
+def getSTD(data,avg):
+    print(str(data))   
+    Dsum = 0.0
+
+    for val in data:
+        Dsum = Dsum + (val-avg)*(val-avg) 
+    
+    return math.sqrt((Dsum/len(data)))
+
+
+
 #END OF IMORTANT FUNCTIONS#####################################################
 
 
@@ -153,9 +175,14 @@ os.chdir("..")
 
 struct = []
 
+KEnum = 0
+KEsum = []
+KEd = []
+KEdc = 0
+
 #START DOING STUFF HERE#############################################################
 
-for siml in range(start,last):
+for siml in range(start,last+1):
     
     #output = open('output','w')
     
@@ -245,23 +272,97 @@ for siml in range(start,last):
     
         c = c + 1
     
+
+    #prepare length of KEsum
+    if(len(KEsum) != len(KEcom)):
+        for l in range(0,len(KEcom)):
+            KEsum.append([])
+            KEsum[l] = 0.0
+
+            
+        
+            print("///////////////////////////////")
+        KEd = [[0.0]*len(KEcom),[0.0]*((last-start)+1)]
+        print str(len(KEd))
+        
+      # for c in range(0,len(KEd)):
+       #    KEd[c] = [0.0]*((last-start)+1)
+
+
+
     for prnt in range(0,len(H)):
         print("Frag:" + str(H[prnt]) + "  Center of Mass KE " + str(KEcom[prnt]))
+        
+        #calculate KEsum 
+        KEsum[prnt] = KEsum[prnt] + KEcom[prnt]
+        
+        
+        
+        KEd[prnt][KEdc] = KEcom[prnt]
     
+
+    
+
     print "\n"
     
-    KEsum = 0.0
+    KEtot = 0.0
     for s in range(0,len(KEcom)):
-        KEsum = KEsum + KEcom[s]
+        KEtot = KEtot + KEcom[s]
     
-    print("Sum of frag KE: " + str(KEsum))    
+    print("Sum of frag KE: " + str(KEtot))    
         #output.close()
     os.chdir('..')
+
+
+    #increment KE data counter
+    KEdc = KEdc + 1
+
     print("**************************************\n")
 
 freqfrag = Counter(fragments)
 print freqfrag
 print "\n"
+
+#print KE average for each fragement & Standard deviation
+
+KEavg = []
+
+#calculate KEavg
+for z in range(0, len(KEsum)):
+    KEavg.append([])
+
+    KEavg[z] = KEsum[z]/((last-start)+1)
+    
+    print ("KEAVG  " + str(KEavg[z]))
+
+print translate(atoms,H[0])
+print translate(atoms,H[1])
+
+print "\n \n"
+
+
+sp = "    "
+
+#create summary file write to file
+f = file("./Summary.txt","w")
+f.write("Summary\n")
+f.write("  \n")
+
+
+for frag in range(0, len(H)):
+    
+    f.write("Frag '"+ translate(atoms,H[frag]) + sp +"KE Average: " + str(KEavg[frag]) + sp + "KE Deviation: " + str(getSTD(KEd[frag],KEavg[frag])) + "\n")
+
+
+
+os.popen("cat ./Summary.txt")
+
+
+
+
+
+
+
 
 
 

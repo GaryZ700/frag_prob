@@ -198,7 +198,7 @@ for siml in range(start,last+1):
     struct = getStructs(md)
 
     
-# This is where the main loop of reading the coordinates begin:
+    #This is where the main loop of reading the coordinates begin:
     for m in range(md,md+1):
         #struct loop
         for s in range(1,3):#int(struct[m])-1):
@@ -206,13 +206,13 @@ for siml in range(start,last+1):
             for a in range(0,len(atoms)):
                 X.append(list(getx(s,atoms,struct_size,m,a)))
             G = createGraph(X,atoms,cutoff)
-#           H is the list of subgraphs
+            #H is the list of subgraphs
             H = [list(yy) for yy in nx.connected_components(G)]
     #print loc, H
-#   ha1/2 are for converting it into atoms (so that degenerate ones are
-#   taken into the same class. (In case that was not clear: atom number 3 and 4
-#       are both Hydrogens. So, if the atoms are not distinguishable, except their
-#       identity in atom number, then the fragments may not be distinguished.
+    #   ha1/2 are for converting it into atoms (so that degenerate ones are
+    #   taken into the same class. (In case that was not clear: atom number 3 and 4
+    #   are both Hydrogens. So, if the atoms are not distinguishable, except their
+    #   identity in atom number, then the fragments may not be distinguished.
 
     ha1 = []
     for h1 in H:
@@ -226,7 +226,7 @@ for siml in range(start,last+1):
     Vcom = []					
     
     #move into last molecule folder
-#    os.chdir("./"+str(filehead)+str(last))
+    #os.chdir("./"+str(filehead)+str(last))
     
     #get number of smd files in last folder
     #md = int(os.popen('ls -l mdlog* | wc -l').read())
@@ -234,42 +234,40 @@ for siml in range(start,last+1):
     #get number of structs in each md file
     #struct = getStructs(md) 
     
-    
-    for frag in H:
-        
-        tmass = fragMass(atoms,masses,frag)
-    
-        vtemp = np.array([0.0,0.0,0.0])
-        
-        for atom in frag:
-                                
-            vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
-        
-        Vcom.append(vtemp)
-    
-    for prnt in range(0,len(H)):
-        print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
-    
-    
-    print("\n")
-    #get COM KE for frags
-    
     KEcom = []
     c = 0
     
     for frag in H:
         tmass = fragMass(atoms,masses,frag)
+        vtemp = np.array([0.0,0.0,0.0])
         
-        v = 0.0
+        for atom in frag:
+            vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
+
+        Vcom.append(vtemp)
+    
+    #for prnt in range(0,len(H)):
+        #print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
+        print("Frag:" + str(frag) + "  Center of Mass Velocity" + str(vtemp))
+    
+    
+        print("\n")
+    #get COM KE for frags
+    
+    
+    #for frag in H:
+        tmass = fragMass(atoms,masses,frag)
+        
+        vsq = 0.0
         for a in range(0,3):
-            v = v + (Vcom[c][a]*Vcom[c][a])
+            #v = v + (Vcom[c][a]*Vcom[c][a])
+            vsq = vsq + (vtemp[a]*vtemp[a])
         #Not sure if the equation is correct
         # I just put the v=0.0 INSIDE the loop of frag.
         # This is why you were getting some error.
     
         KEcom.append([])
-        KEcom[c] = .5*tmass*v
-    
+        KEcom[c] = .5*tmass*vsq
         c = c + 1
     
 

@@ -111,7 +111,85 @@ def getStructs(md):
         struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
     
     return struct
+
 #****************************************************************
+
+#user interface for accessing frag database
+
+def gui(dB,fragTypes,atoms):
+    
+    opt = [1]    
+    sp = "    "
+
+
+    print("\n")
+    print("Molecule: " + str(atoms))
+    print("Fragment Versions: "+ str(len(fragTypes)))
+    print("\n")
+    
+    for n in range(0,len(fragTypes)):
+        print(sp + trans(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+
+    
+
+
+
+
+
+#****************************************************************
+
+def trans(atoms,obj):
+    
+    finstr = ""
+    
+    for frag in obj:
+        holder = ""
+            
+        if(not isinstance(frag,int)):
+            for atom in frag:        
+                holder = holder + " " + atoms[atom]
+        finstr = finstr + "   " + holder 
+
+    return finstr
+
+
+#****************************************************************
+
+
+#get number of fragmentation types in db
+def getFT(dB):
+    
+    flist = []
+    repeat = []
+    
+    
+    flist.append(dB[0][1])
+    repeat.append([1])
+    
+    for b in range(1, len(dB)):
+        
+        unique = True
+        
+        for c in range(0,len(flist)):
+            if(flist[c] == dB[b][1]):
+                unique = False
+                repeat[c].append(1)
+                
+        if(unique):
+            flist.append(dB[b][1])
+            repeat.append([1])
+
+    for h in range(0, len(repeat)):
+        flist[h].append(len(repeat[h]))
+
+    
+    return flist    
+
+
+
+
+#****************************************************************
+
 
 
 
@@ -192,3 +270,11 @@ for siml in range(start,last+1):
 
 for line in dB:
     print(line)
+
+fragTypes = getFT(dB)
+print str(fragTypes)
+gui(dB,fragTypes,atoms)
+
+
+
+

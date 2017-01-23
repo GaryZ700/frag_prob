@@ -113,8 +113,33 @@ def getStructs(md):
     return struct
 #****************************************************************
 
+def constructI(frag,atoms,X):
+    I = [[0.0 for y in range(3)] for x in range(3)]
+    for i in range(3):
+        for atom in frag:
+            I[i][i] += masses[atoms[atom]]*(X[atom][(i+1)%3]**2 + X[atom][(i+2)%3]**2)
+        for j in range(3):
+            if(i==j) continue
+            I[i][j] += -masses[atoms[atom]]*(X[atom][i]*X[atom][j])
+    return I
+
+ 
+            
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+#***************************************************************
 masses = {'c':21894.2, 'h':1837.29, 'o':21894.2}
 cutoff = 3.0
 fragments = []
@@ -128,7 +153,8 @@ KEnum = 0
 KEsum = []
 KEd = []
 KEdc = 0
-dB = []
+dB = [] #the database. We shall be playing with this a bit.
+#***************************************************************
 
 for siml in range(start,last+1):
     
@@ -154,9 +180,6 @@ for siml in range(start,last+1):
             G = createGraph(X,atoms,cutoff)
             #H is the list of subgraphs
             H = [list(yy) for yy in nx.connected_components(G)]
-#    print(X)
-
-#    print(V)
 
     nn = len(H)
     Vcom = [[0.0 for y in range(3)] for x in range(nn)]

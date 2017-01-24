@@ -231,7 +231,7 @@ def getFT(dB):
 #Calculates the rotational energy for each frag
 def RKEfrag(frag,longX,longV,atoms):
     newV,newX =  newXV(longX,longV,frag,atoms)
-     
+    
     I = constructI(frag,atoms,newX)
     Id,U = np.linalg.eig(I)
     rke = 0.0
@@ -242,12 +242,11 @@ def RKEfrag(frag,longX,longV,atoms):
         Vpp = np.zeros(3)
         Xpp = np.zeros(3)
   
-        
+
         for dim in range(3):
-            Vpp[dim] = np.norm(np.cross(U[dim],newV[atom]))
-            Xpp[dim] = newX[atom] - (np.dot(U[dim],newX[atom]))
-            if(Xpp[dim] > tolerance):
-                rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
+            Vpp[dim] = np.linalg.norm(np.cross(U[dim],newV[atom]))
+            Xpp[dim] = np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
+            rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
 
 #****************************************************************
 def newXV(longX,longV,frag,atoms):
@@ -285,7 +284,6 @@ KEsum = []
 KEd = []
 KEdc = 0
 dB = [] #the database. We shall be playing with this a bit.
-tolerance = 0.0001
 #***************************************************************
 
 for siml in range(start,last+1):

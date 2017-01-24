@@ -268,7 +268,7 @@ def getFT(dB):
 #****************************************************************
 
 #Calculates the rotational energy for each frag
-def RKEfrag(frag,longX,longV,atoms,tolerance):
+def RKEfrag(frag,longX,longV,atoms):
     newV,newX =  newXV(longX,longV,frag,atoms)
     
     I = constructI(frag,atoms,newX)
@@ -285,7 +285,7 @@ def RKEfrag(frag,longX,longV,atoms,tolerance):
         for dim in range(3):
             Vpp[dim] = np.linalg.norm(np.cross(U[dim],newV[atom]))
             Xpp[dim] = np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
-            if(Xpp[dim] > tolerance ):
+            if(Xpp[dim] > tolerance):
                 rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
 
 #****************************************************************
@@ -319,12 +319,13 @@ struct_size = 3*len(atoms)+3
 os.chdir("..")
 
 struct = []
+
+tolerance = 0.001
 KEnum = 0
 KEsum = []
 KEd = []
 KEdc = 0
 dB = [] #the database. We shall be playing with this a bit.
-tolerance = 0.00001
 #***************************************************************
 
 for siml in range(start,last+1):
@@ -360,7 +361,7 @@ for siml in range(start,last+1):
     TKEd = []
     for frag in H:
         tmass = fragMass(atoms,masses,frag)
-        RKEd.append(RKEfrag(frag,X,V,atoms,tolerance)
+        RKEd.append(RKEfrag(frag,X,V,atoms)) 
         TKEd.append(TKEfrag(frag,V,atoms))
   
         #This part calculates the KEcom for the frag 

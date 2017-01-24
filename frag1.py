@@ -246,7 +246,8 @@ def RKEfrag(frag,longX,longV,atoms):
         for dim in range(3):
             Vpp[dim] = np.linalg.norm(np.cross(U[dim],newV[atom]))
             Xpp[dim] = np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
-            rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
+            if(Xpp[dim] > tolerance ):
+                rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
 
 #****************************************************************
 def newXV(longX,longV,frag,atoms):

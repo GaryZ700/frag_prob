@@ -112,8 +112,38 @@ def getStructs(md):
     
     return struct
 
+
+
+
+
+
+
+#****************************************************************
+#info 1 = frag 2 = Vcom 3 = Kecom 4 = RKE 
+
+def dBreader(fragtype,fragnum):
+    
+    holder = []
+    for n in range(len(dB)):
+        if(str(dB[n][1]) == fragtype):
+            holder.append(db[n][info])
+    holder2 = []     
+    for c in range(len(holder)):
+        holder2.append(holder[c][fragnum])
+    return holder2
+
 #****************************************************************
 
+def fragPrint(fragTypes,info,atoms,inp):
+    sp = "    "
+    for n in range(0,len(fragTypes)):
+        for fragnum in range(len(fragtypes[n])):
+            print(sp + numtoatmname(atoms,fragTypes[n][fragnum]) + "STDev of " + info + str(dBreader(fragTypes[n],fragnum))) 
+
+
+
+
+#****************************************************************
 #user interface for accessing frag database
 
 def gui(dB,fragTypes,atoms):
@@ -130,12 +160,21 @@ def gui(dB,fragTypes,atoms):
     for n in range(0,len(fragTypes)):
         print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
 
-    print("1. Get KE")
-    print("2. Get RE")
-    print("3. Get VE")
+    print("1. Get Total KE")
+    print("2. Get Center of Mass KE")
+    print("3. Get RKE")
 
     inp = raw_input("Please choose an option.")
     
+    print(str(inp))
+    
+    if(inp == 1):
+        fragPrint(fragTypes,"KE",inp,atoms)
+    if(inp == 2):
+    if(inp == 3):
+  
+
+
     if(inp == 1):
         for n in range(0,len(fragTypes)):
             print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 

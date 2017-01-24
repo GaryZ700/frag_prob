@@ -172,7 +172,8 @@ def constructI(frag,atoms,X):
         for atom in frag:
             I[i][i] += masses[atoms[atom]]*(X[atom][(i+1)%3]**2 + X[atom][(i+2)%3]**2)
         for j in range(3):
-            if(i==j) continue
+            if(i==j):
+                continue
             I[i][j] += -masses[atoms[atom]]*(X[atom][i]*X[atom][j])
     return I
 
@@ -247,8 +248,6 @@ def RKEfrag(frag,longX,longV,atoms):
             Xpp[dim] = newX[atom] - (np.dot(U[dim],newX[atom]))
             if(Xpp[dim] > tolerance):
                 rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
-            
-                    
 
 #****************************************************************
 def newXV(longX,longV,frag,atoms):
@@ -354,11 +353,13 @@ for siml in range(start,last+1):
         ha1.append(ha2)
     fragments = fragments + [str([list(Hh) for Hh in ha1])]
 
-for line in dB:
-    print(line)
+#for line in dB:
+#    print(line)
 
 fragTypes = getFT(dB)
-print str(fragTypes)
+#print str(fragTypes)
+
+
 gui(dB,fragTypes,atoms)
 
 

@@ -11,18 +11,18 @@ import argparse as ap
 import math
 
 #starting arguments
-parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
+#parser = ap.ArgumentParser(description="Analysis of the fragmentation in MD from mdlog.x")
 
-parser.add_argument('-f',"--filehead", metavar='filehead',type=str, default="b4500m")
-parser.add_argument('-s',"--start", metavar='start',type=int, default=1)
-parser.add_argument('-l',"--last", metavar="last",type=int,default=10)
+#parser.add_argument('-f',"--filehead", metavar='filehead',type=str, default="b4500m")
+#parser.add_argument('-s',"--start", metavar='start',type=int, default=1)
+#parser.add_argument('-l',"--last", metavar="last",type=int,default=10)
 
 
-args = parser.parse_args()
+#args = parser.parse_args()
 
-filehead = args.filehead
-start = args.start
-last = args.last
+#filehead = args.filehead
+#start = args.start
+#last = args.last
 
 
 
@@ -143,7 +143,7 @@ def translate(atoms,frag):
 
 
 #return standard deviation of data
-def getSTD(data,avg):
+def STDev(data,avg):
     print(str(data))   
     Dsum = 0.0
 
@@ -151,6 +151,70 @@ def getSTD(data,avg):
         Dsum = Dsum + (val-avg)*(val-avg) 
     
     return math.sqrt((Dsum/len(data)))
+
+#get number of MD files in folder
+def getMD:
+    md = int(os.popen('ls -l mdlog* | wc -l').read())
+
+def getFrags(md,struct,atoms,struct_size,cutoff):
+    for m in range(1,md+1):
+    #struct loop
+        for s in range(0,int(struct[m])):
+            X = []
+            for a in range(0,len(atoms)):
+                X.append(list(getx(s,atoms,struct_size,m,a)))
+            G = createGraph(X,atoms,cutoff)
+            #H is the list of subgraphs
+            H = [list(yy) for yy in nx.connected_components(G)]
+ 
+
+def getVcom(atoms,masses,H):
+    for frag in H:
+        tmass = fragMass(atoms,masses,frag)
+        vtemp = np.array([0.0,0.0,0.0])
+        
+        for atom in frag:
+            vtemp =  vtemp + ((masses[atoms[atom]] * np.array(getv((struct[md-1]-10),atoms,struct_size,md,atom))/tmass))
+
+        Vcom.append(vtemp)
+    	
+        
+
+    #for prnt in range(0,len(H)):
+        #print("Frag:" + str(H[prnt]) + "  Center of Mass Velocity" + str(Vcom[prnt]))
+        print("Frag:" + str(frag) + "  Center of Mass Velocity" + str(vtemp))
+    
+    
+        print("\n")
+    #get COM KE for frags
+    
+    return Vcom
+ 
+def getKEcom(H,Vcom):    
+    
+    KEcom = []
+
+    for frag in range(0,len(H)):
+        tmass = fragMass(atoms,masses,frag)
+        
+        vsq = 0.0
+        for a in range(0,3):
+            #v = v + (Vcom[c][a]*Vcom[c][a])
+            vsq = vsq + (Vcom[frag][a]*Vcom[frag][a])
+            # Not sure if the equation is correct
+            # I just put the v=0.0 INSIDE the loop of frag.
+            # This is why you were getting some error.
+    
+        KEcom.append([])
+        KEcom[c] = .5*tmass*vsq
+    
+    return KEcom
+ 
+
+
+
+
+#
 
 
 
@@ -199,9 +263,9 @@ for siml in range(start,last+1):
 
     
     #This is where the main loop of reading the coordinates begin:
-    for m in range(md,md+1):
+    for m in range(1,md+1):
         #struct loop
-        for s in range(1,3):#int(struct[m])-1):
+        for s in range(0,int(struct[m])):
             X = []
             for a in range(0,len(atoms)):
                 X.append(list(getx(s,atoms,struct_size,m,a)))

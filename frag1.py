@@ -128,9 +128,20 @@ def gui(dB,fragTypes,atoms):
     print("\n")
     
     for n in range(0,len(fragTypes)):
-        print(sp + trans(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+        print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+
+    print("1. Get KE")
+    print("2. Get RE")
+    print("3. Get VE")
+
+    inp = raw_input("Please choose an option.")
+    
+    if(inp == 1):
+        for n in range(0,len(fragTypes)):
+            print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
 
     
+        
 
 
 
@@ -138,7 +149,7 @@ def gui(dB,fragTypes,atoms):
 
 #****************************************************************
 
-def trans(atoms,obj):
+def numtoatmname(atoms,obj):
     
     finstr = ""
     
@@ -166,8 +177,15 @@ def constructI(frag,atoms,X):
     return I
 
  
-            
-
+         
+#****************************************************************
+#calculates the total KE for each frag
+def TKEfrag(frag,longV,atoms):
+    KE = 0.0
+    for atom in frag:
+        for dim in range(3):
+            KE += .5*masses[atoms[atom]]*longV[atom][dim]*longV[atom][dim]
+    return KE          
 
 
 
@@ -209,12 +227,45 @@ def getFT(dB):
 
 #****************************************************************
 
+#Calculates the rotational energy for each frag
+def RKEfrag(frag,longX,longV,atoms):
+    newV,newX =  newXV(longX,longV,frag,atoms)
+    
+    I = constructI(frag,atoms,newX)
+    Id,U = np.linalg.eig(I)
+    rke = 0.0
+    Vpp = np.zeros(3)
+    Xpp = np.zeros(3)
+  
+    for atom in frag:
+        Vpp = np.zeros(3)
+        Xpp = np.zeros(3)
+  
 
+        for dim in range(3):
+            Vpp[dim] = np.norm(np.cross(U[dim],newV[atom]))
+            Xpp[dim] = newX[atom] - (np.dot(U[dim],newX[atom]))
+            rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
 
-
-
-
-
+#****************************************************************
+def newXV(longX,longV,frag,atoms):
+    Xcom = np.zeros(3)
+    Vcom = np.zeros(3)
+    tmass = fragMass(atoms,masses,frag)
+    for atom in frag:
+        for dim in range(3):
+            Vcom[dim] += (longV[atom][dim]*masses[atoms[atom]])/tmass
+            Xcom[dim] += (longX[atom][dim]*masses[atoms[atom]])/tmass
+    
+    
+    newX = np.empty([len(longV),3])
+    newV = np.empty([len(longV),3])
+    
+    for i in range(len(longX)):
+        newX[i] = longX[i] - Xcom
+        newV[i] = longV[i] - Vcom   
+    
+    return newV,newX 
 
 
 #***************************************************************
@@ -263,8 +314,14 @@ for siml in range(start,last+1):
     Vcom = [[0.0 for y in range(3)] for x in range(nn)]
     KEcom = [0.0 for y in range(nn)]
     cou = 0
+    RKEd = []
+    TKEd = []
     for frag in H:
         tmass = fragMass(atoms,masses,frag)
+        RKEd.append(RKEfrag(frag,X,V,atoms)) 
+        TKEd.append(TKEfrag(frag,V,atoms))
+  
+        #This part calculates the KEcom for the frag 
         for atom in frag:
             for dim in range(3):
                 Vcom[cou][dim] += (V[atom][dim]*masses[atoms[atom]])/tmass
@@ -278,6 +335,8 @@ for siml in range(start,last+1):
     listemp.append(H)
     listemp.append(Vcom)
     listemp.append(KEcom)
+    listemp.append(RKEd)
+    listemp.append(TKEd)
     dB.append(listemp)
 
     print("End of a siml")

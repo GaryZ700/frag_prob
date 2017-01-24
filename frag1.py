@@ -229,7 +229,7 @@ def getFT(dB):
 #****************************************************************
 
 #Calculates the rotational energy for each frag
-def RKEfrag(frag,longX,longV,atoms):
+def RKEfrag(frag,longX,longV,atoms,tolerance):
     newV,newX =  newXV(longX,longV,frag,atoms)
     
     I = constructI(frag,atoms,newX)
@@ -285,6 +285,7 @@ KEsum = []
 KEd = []
 KEdc = 0
 dB = [] #the database. We shall be playing with this a bit.
+tolerance = 0.00001
 #***************************************************************
 
 for siml in range(start,last+1):
@@ -320,7 +321,7 @@ for siml in range(start,last+1):
     TKEd = []
     for frag in H:
         tmass = fragMass(atoms,masses,frag)
-        RKEd.append(RKEfrag(frag,X,V,atoms)) 
+        RKEd.append(RKEfrag(frag,X,V,atoms,tolerance)
         TKEd.append(TKEfrag(frag,V,atoms))
   
         #This part calculates the KEcom for the frag 

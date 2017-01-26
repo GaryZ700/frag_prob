@@ -121,63 +121,90 @@ def getStructs(md):
 #****************************************************************
 #info 1 = frag 2 = Vcom 3 = Kecom 4 = RKE 
 
-def dBreader(fragtype,fragnum):
+def dBread(fragType,fragnum,inp):
     
     holder = []
-    for n in range(len(dB)):
-        if(str(dB[n][1]) == fragtype):
-            holder.append(db[n][info])
-    holder2 = []     
-    for c in range(len(holder)):
-        holder2.append(holder[c][fragnum])
-    return holder2
+    
+    for line in range(len(dB)):
+        if(line in dBMap[fragType]):
+           holder.append(dB[line][inp][fragnum]) 
+    
+    return str(np.mean(holder)), str(np.std(holder))
+    
+    #for n in range(len(dB)):
+     #   if(str(dB[n][1]) == fragtype):
+      #      holder.append(db[n][info])
+    #holder2 = []     
+    #for c in range(len(holder)):
+        #holder2.append(holder[c][fragnum])
+    #return holder2
 
 #****************************************************************
 
-def fragPrint(fragTypes,info,atoms,inp):
+def fragPrint(fragTypes,info,inp,atoms):
+    
+    os.system('clear')
+    print("\n")
     sp = "    "
     for n in range(0,len(fragTypes)):
-        for fragnum in range(len(fragtypes[n])):
-            print(sp + numtoatmname(atoms,fragTypes[n][fragnum]) + "STDev of " + info + str(dBreader(fragTypes[n],fragnum))) 
+        print("Frag: " + numtoatmname(atoms,fragTypes[n]))
+        print("\n")
+        for fragnum in range(len(fragTypes[n])-1):
+            avg, stdev = dBread(n,fragnum,inp)
 
+            
+            print(sp + numtoatmname2(atoms,fragTypes[n][fragnum]) + ": " + info  + " Avg: "+ avg + sp + info + " Standard Deviation: " + stdev) 
+            print("\n")
 
-
+    
+    raw_input("Press Enter to Return to Menu")
+    os.system("clear")
+    print("\n")
 
 #****************************************************************
 #user interface for accessing frag database
 
 def gui(dB,fragTypes,atoms):
     
-    opt = [1]    
+ 
     sp = "    "
+    exit = 1
 
+    while(exit != 0):
+        print("\n \n")
+        print("Molecule: " + str(atoms))
+        print("Fragment Versions: "+ str(len(fragTypes)))
+        print("\n")
 
-    print("\n")
-    print("Molecule: " + str(atoms))
-    print("Fragment Versions: "+ str(len(fragTypes)))
-    print("\n")
     
-    for n in range(0,len(fragTypes)):
-        print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+        for n in range(0,len(fragTypes)):
+            print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
 
-    print("1. Get Total KE")
-    print("2. Get Center of Mass KE")
-    print("3. Get RKE")
+        print("\n")
+        print("1. Get Total KE")
+        print("2. Get Center of Mass KE")
+        print("3. Get RKE")
+        print("0. Exit")
+        print("\n")
 
-    inp = raw_input("Please choose an option.")
-    
-    print(str(inp))
-    
-    if(inp == 1):
-        fragPrint(fragTypes,"KE",inp,atoms)
-    if(inp == 2):
-    if(inp == 3):
+        inp = int(raw_input("Please choose an option. \n"))
+        exit = inp
+
+
+        print("\n")
+
+        if(inp == 1):
+            fragPrint(fragTypes,"KE",5,atoms)
+        if(inp == 2):
+           fragPrint(fragTypes,"KEcom",3,atoms)
+        if(inp == 3):
+           fragPrint(fragTypes,"RKE",4,atoms)
   
 
 
-    if(inp == 1):
-        for n in range(0,len(fragTypes)):
-            print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+  #  if(inp == 1):
+   #     for n in range(0,len(fragTypes)):
+    #        print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
 
     
         
@@ -188,6 +215,18 @@ def gui(dB,fragTypes,atoms):
 
 #****************************************************************
 
+def numtoatmname2(atoms,frag):
+       
+    finstr = ""
+    
+    for atom in frag:        
+           
+        finstr = finstr + " "  + atoms[atom]
+         
+
+    return finstr
+
+
 def numtoatmname(atoms,obj):
     
     finstr = ""
@@ -196,7 +235,8 @@ def numtoatmname(atoms,obj):
         holder = ""
             
         if(not isinstance(frag,int)):
-            for atom in frag:        
+            for atom in frag:  
+        
                 holder = holder + " " + atoms[atom]
         finstr = finstr + "   " + holder 
 
@@ -238,10 +278,11 @@ def getFT(dB):
     
     flist = []
     repeat = []
-    
+    dBMap = [] 
     
     flist.append(dB[0][1])
     repeat.append([1])
+    dBMap.append([0])
     
     for b in range(1, len(dB)):
         
@@ -251,20 +292,23 @@ def getFT(dB):
             if(flist[c] == dB[b][1]):
                 unique = False
                 repeat[c].append(1)
+                dBMap[c].append(b)
                 
         if(unique):
             flist.append(dB[b][1])
             repeat.append([1])
+            dBMap.append([])
+            dBMap[len(flist)-1].append(b)
 
     for h in range(0, len(repeat)):
         flist[h].append(len(repeat[h]))
 
     
-    return flist    
+    return flist,dBMap    
 
 
 
-
+1
 #****************************************************************
 
 #Calculates the rotational energy for each frag
@@ -287,6 +331,7 @@ def RKEfrag(frag,longX,longV,atoms):
             Xpp[dim] = np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
             if(Xpp[dim] > tolerance):
                 rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
+    return rke            
 
 #****************************************************************
 def newXV(longX,longV,frag,atoms):
@@ -326,6 +371,8 @@ KEsum = []
 KEd = []
 KEdc = 0
 dB = [] #the database. We shall be playing with this a bit.
+dBMap = []
+tolerance = 0.00001
 #***************************************************************
 
 for siml in range(start,last+1):
@@ -334,6 +381,7 @@ for siml in range(start,last+1):
     os.chdir(filehead + str(siml))
     if os.path.isfile("GEO_OPT_FAILED"):
         os.chdir("..")
+        print("FAIL!")
         continue
     
     #get # of mdlogs
@@ -394,11 +442,11 @@ for siml in range(start,last+1):
     fragments = fragments + [str([list(Hh) for Hh in ha1])]
 
 #for line in dB:
-#    print(line)
+    #print(line)
 
-fragTypes = getFT(dB)
+fragTypes, dBMap = getFT(dB)
 #print str(fragTypes)
-
+#print str(dBMap)
 
 gui(dB,fragTypes,atoms)
 

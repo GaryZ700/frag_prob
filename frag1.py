@@ -1,9 +1,9 @@
 # Saswata Roy writes this.
-
+import json
 import networkx as nx
 import numpy as np
 import os
-from collections import Counter
+import collections
 import argparse as ap
 import math
 
@@ -56,8 +56,10 @@ def getv(struct_num,atoms,struct_size,log,atom_num):
 def dist(X1,X2):
     return ((X1[0]-X2[0])**2 + (X1[1]-X2[1])**2 + (X1[2]-X2[2])**2)**0.5
 #***************************************************************
+
 def readstruct(i,struct_size,log):
     return str(os.popen('sed -n '+str(i*struct_size+3)+','+str((i+1)*struct_size+2)+'p ./mdlog.'+str(log)).read())
+#****************************************************************
 
 #get coordinates of specific atom at specific struct
 def getx(struct_num,atoms,struct_size,log,atom_num):
@@ -111,120 +113,77 @@ def getStructs(md):
         struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
     
     return struct
-
-
-
-
-
-
-
 #****************************************************************
-#info 1 = frag 2 = Vcom 3 = Kecom 4 = RKE 
 
-def dBread(fragType,fragnum,inp):
+#info 1 = frag 2 = Vcom 3 = Kecom 4 = RKE 
+def dBreader(fragtype,fragnum):
     
     holder = []
-    
-    for line in range(len(dB)):
-        if(line in dBMap[fragType]):
-           holder.append(dB[line][inp][fragnum]) 
-    
-    return str(np.mean(holder)), str(np.std(holder))
-    
-    #for n in range(len(dB)):
-     #   if(str(dB[n][1]) == fragtype):
-      #      holder.append(db[n][info])
-    #holder2 = []     
-    #for c in range(len(holder)):
-        #holder2.append(holder[c][fragnum])
-    #return holder2
-
+    for n in range(len(dB)):
+        if(str(dB[n][1]) == fragtype):
+            holder.append(db[n][info])
+    holder2 = []     
+    for c in range(len(holder)):
+        holder2.append(holder[c][fragnum])
+    return holder2
 #****************************************************************
 
-def fragPrint(fragTypes,info,inp,atoms):
-    
-    os.system('clear')
-    print("\n")
+def fragPrint(fragTypes,info,atoms,inp):
     sp = "    "
-    for n in range(0,len(fragTypes)):
-        print("Frag: " + numtoatmname(atoms,fragTypes[n]))
-        print("\n")
-        for fragnum in range(len(fragTypes[n])-1):
-            avg, stdev = dBread(n,fragnum,inp)
-
-            
-            print(sp + numtoatmname2(atoms,fragTypes[n][fragnum]) + ": " + info  + " Avg: "+ avg + sp + info + " Standard Deviation: " + stdev) 
-            print("\n")
-
-    
-    raw_input("Press Enter to Return to Menu")
-    os.system("clear")
-    print("\n")
-
+    for n in range(len(fragTypes)):
+        for fragnum in range(len(fragTypes[n])):
+            print(sp + numtoatmname2(atoms,fragTypes[n][fragnum]) + "STDev of " + info + str(dBreader(fragTypes[n],fragnum))) 
 #****************************************************************
-#user interface for accessing frag database
 
+#user interface for accessing frag database
 def gui(dB,fragTypes,atoms):
     
- 
+    opt = [1]    
     sp = "    "
-    exit = 1
 
-    while(exit != 0):
-        print("\n \n")
-        print("Molecule: " + str(atoms))
-        print("Fragment Versions: "+ str(len(fragTypes)))
-        print("\n")
 
+    print("\n")
+    print("Molecule: " + str(atoms))
+    print("Fragment Versions: "+ str(len(fragTypes)))
+    print("\n")
     
+    for n in range(0,len(fragTypes)):
+        print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
+
+    print("1. Get Total KE")
+    print("2. Get Center of Mass KE")
+    print("3. Get RKE")
+
+    inp = raw_input("Please choose an option.")
+    
+    print(str(inp))
+    
+    if(int(inp) == 1):
+        fragPrint(fragTypes,"KE",inp,atoms)
+    if(inp == 2):
         for n in range(0,len(fragTypes)):
             print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
-
-        print("\n")
-        print("1. Get Total KE")
-        print("2. Get Center of Mass KE")
-        print("3. Get RKE")
-        print("0. Exit")
-        print("\n")
-
-        inp = int(raw_input("Please choose an option. \n"))
-        exit = inp
-
-
-        print("\n")
-
-        if(inp == 1):
-            fragPrint(fragTypes,"KE",5,atoms)
-        if(inp == 2):
-           fragPrint(fragTypes,"KEcom",3,atoms)
-        if(inp == 3):
-           fragPrint(fragTypes,"RKE",4,atoms)
-  
-
-
-  #  if(inp == 1):
-   #     for n in range(0,len(fragTypes)):
-    #        print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
-
-    
-        
-
-
-
-
-
+    if(inp == 3):
+        for n in range(0,len(fragTypes)):
+            print(sp + numtoatmname(atoms,fragTypes[n]) + " Frequency: " + str(fragTypes[n][len(fragTypes[n])-1])) 
 #****************************************************************
 
-def numtoatmname2(atoms,frag):
-       
-    finstr = ""
+def numtoatmname2(atoms,obj):
     
-    for atom in frag:        
-           
-        finstr = finstr + " "  + atoms[atom]
+    finstr = ""
          
+     
+    print(str(frag)+"////////////////////")
+    for atom in frag:
+        print(atoms[atom])
+        if(not isinstance(frag,int)):
+            finstr = finstr + " " + atoms[atom]
+        
 
     return finstr
+
+
+
 
 
 def numtoatmname(atoms,obj):
@@ -235,8 +194,7 @@ def numtoatmname(atoms,obj):
         holder = ""
             
         if(not isinstance(frag,int)):
-            for atom in frag:  
-        
+            for atom in frag:        
                 holder = holder + " " + atoms[atom]
         finstr = finstr + "   " + holder 
 
@@ -250,15 +208,15 @@ def constructI(frag,atoms,X):
     for i in range(3):
         for atom in frag:
             I[i][i] += masses[atoms[atom]]*(X[atom][(i+1)%3]**2 + X[atom][(i+2)%3]**2)
+    for i in range(3):
         for j in range(3):
-            if(i==j):
-                continue
-            I[i][j] += -masses[atoms[atom]]*(X[atom][i]*X[atom][j])
+            for atom in frag:
+                if(i==j):
+                    continue
+                I[i][j] += -masses[atoms[atom]]*(X[atom][i]*X[atom][j])
     return I
-
- 
-         
 #****************************************************************
+
 #calculates the total KE for each frag
 def TKEfrag(frag,longV,atoms):
     KE = 0.0
@@ -266,49 +224,45 @@ def TKEfrag(frag,longV,atoms):
         for dim in range(3):
             KE += .5*masses[atoms[atom]]*longV[atom][dim]*longV[atom][dim]
     return KE          
-
-
-
-
-
-
+#****************************************************************
 
 #get number of fragmentation types in db
 def getFT(dB):
-    
     flist = []
-    repeat = []
-    dBMap = [] 
+    for i in range(len(dB)):
+        flist.append(str(dB[i][1]))
+    counter = collections.Counter(flist)
+#    print(counter)
+
+
+#    flist = []
+#    repeat = []
+#    
+#    
+#    flist.append(dB[0][1])
+#    repeat.append([1])
+#    
+#    for b in range(1, len(dB)):
+#        
+#        unique = True
+#        
+#        for c in range(0,len(flist)):
+#            if(flist[c] == dB[b][1]):
+#                unique = False
+#                repeat[c].append(1)
+#                
+#        if(unique):
+#            flist.append(dB[b][1])
+#            repeat.append([1])
+#
+#    for h in range(0, len(repeat)):
+#        flist[h].append(len(repeat[h]))
+#
     
-    flist.append(dB[0][1])
-    repeat.append([1])
-    dBMap.append([0])
-    
-    for b in range(1, len(dB)):
-        
-        unique = True
-        
-        for c in range(0,len(flist)):
-            if(flist[c] == dB[b][1]):
-                unique = False
-                repeat[c].append(1)
-                dBMap[c].append(b)
-                
-        if(unique):
-            flist.append(dB[b][1])
-            repeat.append([1])
-            dBMap.append([])
-            dBMap[len(flist)-1].append(b)
-
-    for h in range(0, len(repeat)):
-        flist[h].append(len(repeat[h]))
-
-    
-    return flist,dBMap    
 
 
 
-1
+
 #****************************************************************
 
 #Calculates the rotational energy for each frag
@@ -318,22 +272,28 @@ def RKEfrag(frag,longX,longV,atoms):
     I = constructI(frag,atoms,newX)
     Id,U = np.linalg.eig(I)
     rke = 0.0
+
+    L = np.zeros(3)
     Vpp = np.zeros(3)
     Xpp = np.zeros(3)
-  
     for atom in frag:
-        Vpp = np.zeros(3)
-        Xpp = np.zeros(3)
-  
+        L += masses[atoms[atom]]*np.cross(newX[atom],newV[atom])
+    for dim in range(3):
+        rke += (np.dot(L,U[dim]))**2/(2*Id[dim])
+    
 
-        for dim in range(3):
-            Vpp[dim] = np.linalg.norm(np.cross(U[dim],newV[atom]))
-            Xpp[dim] = np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
-            if(Xpp[dim] > tolerance):
-                rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
+
+
+#         for dim in range(3):
+#            Vpp[dim] += np.linalg.norm(np.cross(U[dim],newV[atom]))
+#            Xpp[dim] += np.linalg.norm(newX[atom] - (np.dot(U[dim],newX[atom]))*U[dim])
+#
+#    for dim in range(3):
+#        if(Xpp[dim] > tolerance):
+#            rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
     return rke            
-
 #****************************************************************
+
 def newXV(longX,longV,frag,atoms):
     Xcom = np.zeros(3)
     Vcom = np.zeros(3)
@@ -352,9 +312,8 @@ def newXV(longX,longV,frag,atoms):
         newV[i] = longV[i] - Vcom   
     
     return newV,newX 
-
-
 #***************************************************************
+
 masses = {'c':21894.2, 'h':1837.29, 'o':21894.2}
 cutoff = 3.0
 fragments = []
@@ -371,12 +330,13 @@ KEsum = []
 KEd = []
 KEdc = 0
 dB = [] #the database. We shall be playing with this a bit.
-dBMap = []
-tolerance = 0.00001
 #***************************************************************
 
+outfile = open("data.json","w")
+
+
 for siml in range(start,last+1):
-    
+    dBdict = {} 
     #output = open('output','w')
     os.chdir(filehead + str(siml))
     if os.path.isfile("GEO_OPT_FAILED"):
@@ -411,27 +371,19 @@ for siml in range(start,last+1):
         tmass = fragMass(atoms,masses,frag)
         RKEd.append(RKEfrag(frag,X,V,atoms)) 
         TKEd.append(TKEfrag(frag,V,atoms))
-  
+         
         #This part calculates the KEcom for the frag 
         for atom in frag:
             for dim in range(3):
                 Vcom[cou][dim] += (V[atom][dim]*masses[atoms[atom]])/tmass
-            for dim in range(3):
-                KEtemp = 0.0
-                KEtemp += 0.5*(V[atom][dim]*V[atom][dim])*tmass
-                KEcom[cou] += KEtemp
+        for dim in range(3):
+            KEtemp = 0.0
+            KEtemp += 0.5*(Vcom[cou][dim]*Vcom[cou][dim])*tmass
+            KEcom[cou] += KEtemp
         cou += 1
-    listemp = []
-    listemp.append(nn)
-    listemp.append(H)
-    listemp.append(Vcom)
-    listemp.append(KEcom)
-    listemp.append(RKEd)
-    listemp.append(TKEd)
-    dB.append(listemp)
 
-    print("End of a siml")
-    os.chdir('..')
+
+
 
     ha1 = []
     for h1 in H:
@@ -439,16 +391,39 @@ for siml in range(start,last+1):
         for h2 in h1:
             ha2.append(atoms[h2])
         ha1.append(ha2)
-    fragments = fragments + [str([list(Hh) for Hh in ha1])]
+    #fragments = [list(Hh) for Hh in ha1]
+    dBdict["numfrag"] = nn
+    dBdict["fragments"] = H
+    dBdict["Vcom"] = Vcom
+    dBdict["KEcom"] = KEcom
+    dBdict["RKE"] = RKEd
+    dBdict["TKE"] = TKEd
+    dB.append(dBdict)
+#    json.dump(dBdict,outfile) 
+
+#    listemp = []
+#    listemp.append(nn)
+#    listemp.append(H)
+#    listemp.append(Vcom)
+#    listemp.append(KEcom)
+#    listemp.append(RKEd)
+#    listemp.append(TKEd)
+#
+#    dB.append(listemp)
+
+
+    print("End of a siml")
+    os.chdir('..')
+
 
 #for line in dB:
-    #print(line)
+#    print(line)
+json.dump(dB,outfile) 
 
-fragTypes, dBMap = getFT(dB)
-#print str(fragTypes)
-#print str(dBMap)
+#getFT(dB)
+outfile.close()
 
-gui(dB,fragTypes,atoms)
+#gui(dB,fragTypes,atoms)
 
 
 

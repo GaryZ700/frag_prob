@@ -92,15 +92,23 @@ def fragMass(atoms,masses,frag):
         tmass = tmass + masses[atoms[atom]]    
     return tmass            
 #****************************************************************
-
+#create nx graph to figure out frags
+#args: pos, list of atoms, cutoff dist for frags
 def createGraph(longX,atoms,cutoff):
     G = nx.Graph()
+    
+    #add a node for each atom
     for i in range(len(atoms)):
         G.add_node(i)
+        
+    #compare dist between all atoms
+    #if dist between two atoms < cutoff
+    #add 'bond' to atoms
     for i in range(len(atoms)):
         for j in range(i+1,len(atoms)):
             if(dist(longX[i],longX[j])<cutoff):
                 G.add_edge(i,j)
+                
     return G 
 #****************************************************************
 

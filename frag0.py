@@ -76,6 +76,7 @@ def dist(X1,X2):
     return ((X1[0]-X2[0])**2 + (X1[1]-X2[1])**2 + (X1[2]-X2[2])**2)**0.5
 
 #get coordinates of specific atom at specific struct
+#args: structure number, list of atoms, size of each struct, , number of atom to find
 def getx(struct_num,atoms,struct_size,log,atom_num):
     f = file('work','w')
     f.write(str(readstruct(struct_num,struct_size,log)))
@@ -89,6 +90,8 @@ def getx(struct_num,atoms,struct_size,log,atom_num):
     y = float(line[1])
     z = float(line[2])
 
+    
+    #returns list of XYZ coords of particular atom
     return [x,y,z]
 
 
@@ -109,7 +112,8 @@ def fragMass(atoms,masses,frag):
     return tmass            
 
 
-
+#create nx graph of atoms at respective pos
+#args: pos, list of atoms, dist at which bond is "broken"
 def createGraph(longX,atoms,cutoff):
     G = nx.Graph()
     for i in range(len(atoms)):
@@ -124,10 +128,13 @@ def createGraph(longX,atoms,cutoff):
 def getStructs(md):
     struct = []
     
+    #for md files in each siml
     for c in range(1,md+1):
+        
         struct.append([])
         struct[c-1] = int(os.popen(str('grep "t=" "mdlog.'+str(c)+'" | wc -l')).read())
     
+    #returns array that has #of structs in each md file
     return struct
   
 
@@ -263,11 +270,17 @@ for siml in range(start,last+1):
 
     
     #This is where the main loop of reading the coordinates begin:
+    #for md file in siml
     for m in range(1,md+1):
-        #struct loop
+        
+        #for struct in md file
         for s in range(0,int(struct[m])):
+         
             X = []
+            
+            #for atom in struct
             for a in range(0,len(atoms)):
+                #create list of atom positions
                 X.append(list(getx(s,atoms,struct_size,m,a)))
             G = createGraph(X,atoms,cutoff)
             #H is the list of subgraphs

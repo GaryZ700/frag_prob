@@ -1,0 +1,7 @@
+
+
+
+
+Is the first md log always 1?
+
+For dictionary, should timesteps contain atoms, when then  contain pos/vel, or should timestep itself contain pos/vel?

@@ -62,7 +62,7 @@ print(args.ss)
 
 #init global functions###############################################################################
 #create analysis folder and populate with specified MD log data
-def firstRun(args):
+def initAnalysis(args):
 
     simulationsToParse = []
     MDsToParse = []
@@ -81,7 +81,7 @@ def firstRun(args):
         simulationsToParse.append(args.es)
 
     atoms = io.parseAtoms(args.f)
-    generateAnalysis(atoms,args.f,args.ts,simulationsToParse)
+    populateAnalysisFolder(atoms,args.f,args.ts,simulationsToParse)
 
 
 
@@ -90,19 +90,27 @@ def calculateProperties(timestepData,atoms):
 
     properties = Properties()
     
-    timestepData["fragments"] = {}
-    timestepData["fragments"]["fragmentList"] = properties.findFragments(atoms, timestepData["position"],consts.cutoff)
+    timestepData["molecule"] = {}
+    timestepData["molecule"]["moleculeList"] = properties.findStructure(atoms, timestepData["position"],consts.cutoff)
 
-    if(timestepData["fragments"]["fragmentList"] != False):
-      
-        timestepData["fragments"]["RKE"] = []
-        timestepData["fragments"]["KE"] = []
+    #init data lists in timestep data  
+    timestepData["molecule"]["RKE"] = []
+    timestepData["molecule"]["KE"] = []
+    timestepData["molecule"]["TKE"] = []
+    timestepData["molecule"]["VelocityCOM"] = []
+    timestepData["molecule"]["KECOM"] = []
 
-        for fragment in timestepData["fragments"]["fragmentList"]:
+    for molecule in timestepData["molecule"]["moleculeList"]:
     
-            timestepData["fragments"]["RKE"].append(properties.RKE(fragment,atoms,timestepData["position"],timestepData["velocity"]))
+        #    timestepData["molecule"]["RKE"].append(properties.RKE(molecule,atoms,timestepData["position"],timestepData["velocity"]))
        
-       #timestepData["fragments"]["fragmentList"]["KE"] = properties.KE(timestepData["fragments"]["fragmentList"]) 
+        timestepData["molecule"]["TKE"].append(properties.TKE(molecule,atoms,timestepData["velocity"])) 
+
+        Vcom = properties.Vcom(molecule,atoms,timestepData["velocity"]) 
+
+        timestepData["molecule"]["VelocityCOM"].append(Vcom)
+
+        timestepData["molecule"]["KECOM"].append(properties.KEcom(molecule,atoms,Vcom))
 
 
 
@@ -112,9 +120,8 @@ def calculateProperties(timestepData,atoms):
 def viewResults():
     return 0
 
-#parses requested data from MD logs
-#and returns list of 
-def generateAnalysis(atoms, folderHead, timestepsToParse, simulationsToParse =  []):
+#generates analysis folder structure and populates folders with MD data
+def populateAnalysisFolder(atoms, folderHead, timestepsToParse, simulationsToParse =  []):
     
     #for each simulation to parse
     for simulation in range(simulationsToParse[0] - 1, simulationsToParse[1]):
@@ -145,7 +152,7 @@ def generateAnalysis(atoms, folderHead, timestepsToParse, simulationsToParse =  
         os.chdir("..")
         
 
-        molecule.createMolecule((folderHead + str(simulation)),atoms,data)
+        molecule.createMolecule((folderHead + str(simulation + 1)),atoms,data)
 
 
  
@@ -157,5 +164,5 @@ def generateAnalysis(atoms, folderHead, timestepsToParse, simulationsToParse =  
 #check if analysis folder already exists 
 if(os.path.exists("./analysis") == False):
     #if not, create analysis folder and populate with simulation data
-    firstRun(args)
+    initAnalysis(args)
 

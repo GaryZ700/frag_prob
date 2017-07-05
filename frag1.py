@@ -92,23 +92,15 @@ def fragMass(atoms,masses,frag):
         tmass = tmass + masses[atoms[atom]]    
     return tmass            
 #****************************************************************
-#create nx graph to figure out frags
-#args: pos, list of atoms, cutoff dist for frags
+
 def createGraph(longX,atoms,cutoff):
     G = nx.Graph()
-    
-    #add a node for each atom
     for i in range(len(atoms)):
         G.add_node(i)
-        
-    #compare dist between all atoms
-    #if dist between two atoms < cutoff
-    #add 'bond' to atoms
     for i in range(len(atoms)):
         for j in range(i+1,len(atoms)):
             if(dist(longX[i],longX[j])<cutoff):
                 G.add_edge(i,j)
-                
     return G 
 #****************************************************************
 
@@ -212,16 +204,19 @@ def numtoatmname(atoms,obj):
 #****************************************************************
 
 def constructI(frag,atoms,X):
+    #print(X)
     I = [[0.0 for y in range(3)] for x in range(3)]
     for i in range(3):
         for atom in frag:
             I[i][i] += masses[atoms[atom]]*(X[atom][(i+1)%3]**2 + X[atom][(i+2)%3]**2)
+            
     for i in range(3):
         for j in range(3):
             for atom in frag:
                 if(i==j):
                     continue
                 I[i][j] += -masses[atoms[atom]]*(X[atom][i]*X[atom][j])
+     #           print(I[i][j])
     return I
 #****************************************************************
 
@@ -275,8 +270,7 @@ def getFT(dB):
 
 #Calculates the rotational energy for each frag
 def RKEfrag(frag,longX,longV,atoms):
-    newV,newX =  newXV(longX,longV,frag,atoms)
-    
+    newV,newX =  newXV(longX,longV,frag,atoms) 
     I = constructI(frag,atoms,newX)
     Id,U = np.linalg.eig(I)
     rke = 0.0
@@ -299,6 +293,9 @@ def RKEfrag(frag,longX,longV,atoms):
 #    for dim in range(3):
 #        if(Xpp[dim] > tolerance):
 #            rke += .5*Id[dim]*((Vpp[dim]/Xpp[dim])**2)
+    print("RKE")
+    print(rke)
+
     return rke            
 #****************************************************************
 
@@ -323,7 +320,7 @@ def newXV(longX,longV,frag,atoms):
 #***************************************************************
 
 masses = {'c':21894.2, 'h':1837.29, 'o':21894.2}
-cutoff = 3.0
+cutoff = 5.0
 fragments = []
 os.chdir(filehead + str(start))
 atoms = getatoms([])
@@ -344,69 +341,82 @@ outfile = open("data.json","w")
 
 
 for siml in range(start,last+1):
-    dBdict = {} 
-    #output = open('output','w')
-    os.chdir(filehead + str(siml))
-    if os.path.isfile("GEO_OPT_FAILED"):
-        os.chdir("..")
-        print("FAIL!")
-        continue
+    try:
+        dBdict = {} 
+        #output = open('output','w')
+        os.chdir(filehead + str(siml))
+        if (os.path.isfile("GEO_OPT_FAILED") and not os.path.isfile("mdlog.2")):
+            os.chdir("..")
+            print("FAIL!")
+            continue
+        
+        #get # of mdlogs
+        md = int(os.popen('ls -l mdlog* | wc -l').read())
+        #get number of structs in each md find
+        nstruct = getStructs(md)
+        #This is where the main loop of reading the coordinates begin:
+        for m in range(md,md+1):
+            #struct loop
+            for s in range(1,3):#int(struct[m])-1):
+                X = []
+                V = []
+                for a in range(0,len(atoms)):
+                    
+                    X.append(list(getx(s,atoms,struct_size,m,a)))
+                    V.append(list(getv(s,atoms,struct_size,m,a)))
+            #        print("X")
+             #       print(X)
+                G = createGraph(X,atoms,cutoff)
+                #H is the list of subgraphs
+                H = [list(yy) for yy in nx.connected_components(G)]
     
-    #get # of mdlogs
-    md = int(os.popen('ls -l mdlog* | wc -l').read())
-    #get number of structs in each md find
-    nstruct = getStructs(md)
-    #This is where the main loop of reading the coordinates begin:
-    for m in range(md,md+1):
-        #struct loop
-        for s in range(1,3):#int(struct[m])-1):
-            X = []
-            V = []
-            for a in range(0,len(atoms)):
-                X.append(list(getx(s,atoms,struct_size,m,a)))
-                V.append(list(getv(s,atoms,struct_size,m,a)))
-            G = createGraph(X,atoms,cutoff)
-            #H is the list of subgraphs
-            H = [list(yy) for yy in nx.connected_components(G)]
-
-    nn = len(H)
-    Vcom = [[0.0 for y in range(3)] for x in range(nn)]
-    KEcom = [0.0 for y in range(nn)]
-    cou = 0
-    RKEd = []
-    TKEd = []
-    for frag in H:
-        tmass = fragMass(atoms,masses,frag)
-        RKEd.append(RKEfrag(frag,X,V,atoms)) 
-        TKEd.append(TKEfrag(frag,V,atoms))
-         
-        #This part calculates the KEcom for the frag 
-        for atom in frag:
+        nn = len(H)
+        Vcom = [[0.0 for y in range(3)] for x in range(nn)]
+        KEcom = [0.0 for y in range(nn)]
+        cou = 0
+        Tmass = []
+        RKEd = []
+        TKEd = []
+        for frag in H:
+            tmass = fragMass(atoms,masses,frag)
+            Tmass.append(tmass)
+            RKEd.append(RKEfrag(frag,X,V,atoms)) 
+            TKEd.append(TKEfrag(frag,V,atoms))
+             
+            #This part calculates the KEcom for the frag 
+            for atom in frag:
+                for dim in range(3):
+                    Vcom[cou][dim] += (V[atom][dim]*masses[atoms[atom]])/tmass
             for dim in range(3):
-                Vcom[cou][dim] += (V[atom][dim]*masses[atoms[atom]])/tmass
-        for dim in range(3):
-            KEtemp = 0.0
-            KEtemp += 0.5*(Vcom[cou][dim]*Vcom[cou][dim])*tmass
-            KEcom[cou] += KEtemp
-        cou += 1
+                KEtemp = 0.0
+                KEtemp += 0.5*(Vcom[cou][dim]*Vcom[cou][dim])*tmass
+                KEcom[cou] += KEtemp
+            cou += 1
+    
+    
+    
+    
+        ha1 = []
+        for h1 in H:
+            ha2 = []
+            for h2 in h1:
+                ha2.append(atoms[h2])
+            ha1.append(ha2)
+        #fragments = [list(Hh) for Hh in ha1]
+        dBdict["numfrag"] = nn
+        dBdict["fragments"] = H
+        dBdict["Vcom"] = Vcom
+        dBdict["KEcom"] = KEcom
+        dBdict["RKE"] = RKEd
+        dBdict["TKE"] = TKEd
+        dBdict["Tmass"] = Tmass
+        
+        dB.append(dBdict)
 
 
 
 
-    ha1 = []
-    for h1 in H:
-        ha2 = []
-        for h2 in h1:
-            ha2.append(atoms[h2])
-        ha1.append(ha2)
-    #fragments = [list(Hh) for Hh in ha1]
-    dBdict["numfrag"] = nn
-    dBdict["fragments"] = H
-    dBdict["Vcom"] = Vcom
-    dBdict["KEcom"] = KEcom
-    dBdict["RKE"] = RKEd
-    dBdict["TKE"] = TKEd
-    dB.append(dBdict)
+
 #    json.dump(dBdict,outfile) 
 
 #    listemp = []
@@ -420,8 +430,10 @@ for siml in range(start,last+1):
 #    dB.append(listemp)
 
 
-    print("End of a siml")
-    os.chdir('..')
+        print("End of a siml")
+        os.chdir('..')
+    except:
+        print "Unknown prblem"
 
 
 #for line in dB:

@@ -110,35 +110,78 @@ class Properties:
             rke += (np.dot(L,eigenVectors[dimension]))**2 / (2*eigenValues[dimension])
 
         return rke
+
+
 ######################################################################
-    #find cartesian distances between two points in 3D space
+    def TKE(self,molecule,atoms,velocity):
+    #returns Total Kinetic Energy of Molecule
+
+        #init KE float
+        KE = 0.0
+
+        #for each atom in molecule, each dimension of motion, calculate KE and add to molecule KE
+        for atom in molecule:
+            for dimension in range(3):
+                KE += 0.5*const.atomMass[atoms[atom]]*(velocity[atom][dimension]**2)
+
+        return KE          
+
+
+#####################################################################
+
+    def KEcom(self,molecule,atoms,Vcom):
+        #calculate center of mass Kinetic Energy for molecule
+        
+        KEcom = 0.0
+
+        for dimension in range(3):
+            KEcom += 0.5 * self.mass(molecule,atoms) * (Vcom[dimension]**2)
+        return KEcom
+ 
+
+
+#####################################################################
+
+    def Vcom(self,molecule,atoms,velocity):
+        #calculates center of mass velocity of a molecule
+
+        Vcom = [0.0,0.0,0.0]
+        moleculeMass = self.mass(molecule,atoms)
+
+        for atom in molecule:
+            for dimension in range(3):
+                Vcom[dimension] += (const.atomMass[atoms[atom]] * velocity[atom][dimension]) / moleculeMass 
+
+        return Vcom
+
+#####################################################################
+        #find cartesian distances between two points in 3D space
     def distance(self,position1,position2):
         return ((position1[0]-position2[0])**2 + (position1[1]-position2[1])**2 + (position1[2]-position2[2])**2)**0.5
 ######################################################################        
-    #get structure of molecule
-    def findFragments(self,atoms,position,cutoff):
+    #get structure of molecule(s)
+    def findStructure(self,atoms,position,cutoff):
         
-        #
-        atomGraph = nx.Graph()
+       atomGraph = nx.Graph()
 
-        #generate a graph with one point per atom        
-        for atom in range(len(atoms)):
-            atomGraph.add_node(atom)
+       #generate a graph with one point per atom        
+       for atom in range(len(atoms)):
+           atomGraph.add_node(atom)
 
-        print("Position")
-        print(position)
-        #picks an atom, and a second atom,
-        #and then compares the distance between the two atoms,
-        #if the distance is less than the cutoff, "bond" the atoms
-        for atom in range(len(atoms)):
-            for nextAtom in range(atom + 1, len(atoms)):
-                if(self.distance(position[atom],position[nextAtom]) < cutoff):
-                    atomGraph.add_edge(atom,nextAtom)
+       print("Position")
+       #print(position)
+       #picks an atom, and a second atom,
+       #and then compares the distance between the two atoms,
+       #if the distance is less than the cutoff, "bond" the atoms
+       for atom in range(len(atoms)):
+           for nextAtom in range(atom + 1, len(atoms)):
+               if(self.distance(position[atom],position[nextAtom]) < cutoff):
+                   atomGraph.add_edge(atom,nextAtom)
+       
+       #return list of each bonded atom group, or fragment
+       fragments =  [list(atoms) for atoms in nx.connected_components(atomGraph)]
+
         
-        #return list of each bonded atom group, or fragment
-        fragments =  [list(atoms) for atoms in nx.connected_components(atomGraph)]
-
-         
-        return fragments
+       return fragments
 
 
